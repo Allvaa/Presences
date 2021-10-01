@@ -19,5 +19,6 @@
     "streaming",
     "other"
   ],
+  "iframe": true,
   "category": "anime"
 }

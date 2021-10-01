@@ -2,18 +2,29 @@ const presence = new Presence({
     clientId: "794916348761210920"
   }),
   presenceData: PresenceData = {
-    largeImageKey: "logo",
-    startTimestamp: Math.floor(Date.now() / 1000)
+    largeImageKey: "logo"
   };
+
+let videoData: VideoData;
+interface VideoData {
+  ready: boolean;
+  currentTime: number;
+  paused: boolean;
+  duration: number;
+}
+
+presence.on("iFrameData", (data: VideoData) => {
+  videoData = data;
+});
 
 presence.on("UpdateData", async () => {
   switch (
     document.location.pathname.endsWith("/") &&
     document.location.pathname.length > 1
       ? document.location.pathname.slice(
-          0,
-          document.location.pathname.length - 1
-        )
+        0,
+        document.location.pathname.length - 1
+      )
       : document.location.pathname
   ) {
     case "/":
@@ -35,12 +46,12 @@ presence.on("UpdateData", async () => {
       if (document.location.search.startsWith("?s")) {
         const params = document.location.search.substring(1),
           { s } = JSON.parse(
-            '{"' +
+            `{"${ 
               decodeURI(params)
                 .replace(/"/g, '\\"')
                 .replace(/&/g, '","')
-                .replace(/=/g, '":"') +
-              '"}'
+                .replace(/=/g, '":"') 
+            }"}`
           );
         presenceData.details = "Searching for:";
         presenceData.state = s;
@@ -61,6 +72,12 @@ presence.on("UpdateData", async () => {
         presenceData.state = document
           .querySelector(".posttl")
           .textContent.replace(/Subtitle Indonesia/gi, "");
+        
+        if (videoData?.ready) {
+          const [, endTimestamp] = presence.getTimestamps(videoData.currentTime, videoData.duration);
+          presenceData.endTimestamp = videoData.paused ? null : endTimestamp;
+        }
+
         presenceData.buttons = [
           { label: "Watch Anime", url: document.location.href },
           {
